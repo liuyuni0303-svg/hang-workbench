@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>杭 · 个人工作台</title>
+<meta name="description" content="个人健康、生活技能、运动数据全记录管理工作台">
+<meta name="theme-color" content="#2b6e5f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="杭">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+  <!-- 侧边栏 -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-head">
+      <div class="logo">杭</div>
+      <div class="logo-text">
+        <div class="logo-title">个人工作台</div>
+        <div id="syncBadge" class="sync-badge sync-local" title="同步状态">
+          <span class="dot"></span><span id="syncText">本地模式</span>
+        </div>
+      </div>
+      <button id="collapseBtn" class="icon-btn" title="收起/展开侧边栏">☰</button>
+    </div>
+    <nav id="navList" class="nav-list"></nav>
+    <div class="sidebar-foot">
+      <button id="manageModulesBtn" class="side-action"><span class="nav-icon">🧩</span><span class="nav-name">栏目管理</span></button>
+      <button id="settingsBtn" class="side-action"><span class="nav-icon">⚙️</span><span class="nav-name">设置与同步</span></button>
+    </div>
+  </aside>
+
+  <!-- 遮罩（移动端侧边栏） -->
+  <div id="scrim" class="scrim"></div>
+
+  <!-- 主内容 -->
+  <main id="main" class="main">
+    <header class="topbar">
+      <button id="menuBtn" class="icon-btn only-mobile" title="菜单">☰</button>
+      <h1 id="pageTitle">减肥</h1>
+      <div class="topbar-right">
+        <button id="syncNowBtn" class="icon-btn" title="立即同步">🔄</button>
+      </div>
+    </header>
+    <div id="view" class="view"></div>
+  </main>
+</div>
+
+<!-- 通用弹窗 -->
+<div id="modalRoot"></div>
+<div id="toast" class="toast"></div>
+
+<script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/mod-weight.js"></script>
+<script src="js/mod-baking.js"></script>
+<script src="js/mod-sport.js"></script>
+<script src="js/mod-headache.js"></script>
+<script src="js/mod-custom.js"></script>
+<script src="js/mod-ledger.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>
