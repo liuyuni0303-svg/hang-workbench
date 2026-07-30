@@ -12,7 +12,7 @@
 
   function renderNav() {
     const mods = visibleModules();
-    if (!mods.find(m => m.key === current)) current = mods.length ? mods[0].key : 'settings';
+    if (current !== 'settings' && !mods.find(m => m.key === current)) current = mods.length ? mods[0].key : 'settings';
     navList.innerHTML = mods.map(m => `
       <button class="nav-item ${m.key === current ? 'active' : ''}" data-nav="${m.key}">
         <span class="nav-icon">${m.icon || '📁'}</span><span class="nav-name">${esc(m.name)}</span>

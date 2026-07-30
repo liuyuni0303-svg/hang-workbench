@@ -1,5 +1,5 @@
 /* 杭 · 个人工作台 Service Worker —— 应用壳离线缓存 + 即时更新 */
-const CACHE = 'hang-app-v8';
+const CACHE = 'hang-app-v9';
 const SHELL = [
   './',
   './index.html',
