@@ -111,6 +111,92 @@
     badge.title = '同步状态：' + st.msg + (st.pending ? `（${st.pending} 条待上传）` : '');
   }
 
+  /* ---------- 家庭成员切换 ---------- */
+  function renderMemberBtn() {
+    const m = Store.getMember(Store.activeMember());
+    if (!m) return;
+    $('#memberEmoji').textContent = m.emoji || '🙂';
+    $('#memberName').textContent = m.name;
+    $('#memberBtn').style.borderColor = m.color || '#2b6e5f';
+  }
+
+  function openMemberSwitcher() {
+    const cur = Store.activeMember();
+    const rows = Store.members().map(m => `
+      <div class="member-row ${m.id === cur ? 'active' : ''}" data-mid="${m.id}" style="--mc:${m.color || '#2b6e5f'}">
+        <span class="member-emoji">${m.emoji || '🙂'}</span>
+        <span class="member-name">${esc(m.name)}</span>
+        ${m.id === cur ? '<span class="tag" style="margin-left:auto">当前</span>' : ''}
+      </div>`).join('');
+    const modal = openModal('切换家庭成员', `
+      <div id="memberSwitchList">${rows}</div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn ghost" id="toManage" style="flex:1">⚙️ 管理成员</button>
+      </div>
+      <p class="muted" style="margin-top:8px">切换后各栏目只展示该成员独立的记录、图表与历史数据，互不影响。</p>`, {
+      onClose() { renderMemberBtn(); }
+    });
+    const box = modal.el.querySelector('#memberSwitchList');
+    box.querySelectorAll('[data-mid]').forEach(el => el.onclick = () => {
+      Store.setActiveMember(el.dataset.mid);
+      renderView(); renderMemberBtn(); modal.close();
+    });
+    modal.el.querySelector('#toManage').onclick = () => { modal.close(); openMemberManager(); };
+  }
+
+  function openMemberManager() {
+    const EMOJIS = ['🙂','😀','🧑','👩','👨','🧒','👧','👦','👵','👴','🐱','🐰','🌟','🍀','🍎','⚽'];
+    function rowsHtml() {
+      return Store.members().map(m => `
+        <div class="member-row" data-mid="${m.id}" style="--mc:${m.color || '#2b6e5f'}">
+          <span class="member-emoji">${m.emoji || '🙂'}</span>
+          <input class="member-name-input" data-name="${m.id}" value="${esc(m.name)}" maxlength="8">
+          <button class="icon-btn" data-pick="${m.id}" title="换图标">🎨</button>
+          ${m.id === 'me' ? '<span class="tag" style="font-size:10px">默认</span>' : `<button class="icon-btn del" data-del="${m.id}" title="删除该成员及其全部数据">🗑️</button>`}
+        </div>`).join('');
+    }
+    const modal = openModal('管理家庭成员', `
+      <div id="memberList">${rowsHtml()}</div>
+      <div class="row" style="margin-top:14px">
+        <input id="newMemberName" placeholder="新成员名称，如：妈妈、宝宝">
+        <button class="btn small" id="addMember" style="flex:none">＋添加成员</button>
+      </div>
+      <p class="muted" style="margin-top:8px">删除非默认成员会一并清除其名下所有记录（减肥/烘焙/记账/头疼/运动等），删除前会再次确认。</p>`, {
+      onClose() { renderMemberBtn(); renderView(); }
+    });
+    const box = modal.el.querySelector('#memberList');
+    function rebind() {
+      box.innerHTML = rowsHtml();
+      box.querySelectorAll('[data-name]').forEach(inp => inp.onchange = () => {
+        const v = inp.value.trim(); if (!v) return;
+        Store.updateMember(inp.dataset.name, { name: v });
+      });
+      box.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => {
+        const cur = Store.getMember(b.dataset.pick);
+        const next = EMOJIS[(EMOJIS.indexOf(cur.emoji) + 1 + EMOJIS.length) % EMOJIS.length] || '🙂';
+        Store.updateMember(b.dataset.pick, { emoji: next });
+        rebind();
+      });
+      box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+        const id = b.dataset.del, m = Store.getMember(id);
+        confirmModal(`删除成员「${m.name}」会一并清除其名下所有记录，确定吗？`, () => {
+          Store.removeMember(id); rebind(); renderMemberBtn(); renderView();
+          toast('已删除成员「' + m.name + '」及其数据');
+        });
+      });
+    }
+    rebind();
+    modal.el.querySelector('#addMember').onclick = () => {
+      const v = modal.el.querySelector('#newMemberName').value.trim();
+      if (!v) { toast('请输入成员名称'); return; }
+      const id = Store.addMember(v, EMOJIS[Store.members().length % EMOJIS.length]);
+      Store.setActiveMember(id);
+      modal.el.querySelector('#newMemberName').value = '';
+      rebind(); renderMemberBtn(); renderView();
+      toast('已添加成员「' + v + '」并切换过去');
+    };
+  }
+
   /* ---------- 事件绑定 ---------- */
   $('#menuBtn').onclick = () => app.classList.add('nav-open');
   $('#scrim').onclick = () => app.classList.remove('nav-open');
@@ -122,6 +208,7 @@
 
   $('#settingsBtn').onclick = () => go('settings');
   $('#manageModulesBtn').onclick = () => { app.classList.remove('nav-open'); openModuleManager(); };
+  $('#memberBtn').onclick = () => openMemberSwitcher();
   $('#syncNowBtn').onclick = async () => {
     if (!Store.configured()) { toast('尚未配置云端，去「设置与同步」开通'); go('settings'); return; }
     toast('正在同步…');
@@ -130,6 +217,7 @@
   };
 
   Store.on('sync', renderSyncBadge);
+  Store.on('member', () => { renderMemberBtn(); renderView(); });
   Store.on('change', mod => {
     // 数据变化（含云端拉取合并）时，若正在查看该模块则刷新
     const m = Store.getSettings().modules.find(x => x.key === current);
@@ -141,5 +229,6 @@
   renderNav();
   renderView();
   renderSyncBadge();
+  renderMemberBtn();
   Store.startAuto();
 })();

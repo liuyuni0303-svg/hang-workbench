@@ -38,6 +38,29 @@ const Store = (() => {
   let dirty = new Set(loadJSON(LS.dirty, []));     // 待上传 id
   let lastPull = loadJSON(LS.lastPull, '1970-01-01T00:00:00Z');
 
+  /* ---------- 家庭成员（多成员数据隔离，随云端同步） ---------- */
+  const SYS_MEMBER = '__member__';          // 成员目录保留模块，不入导航
+  const DEFAULT_MEMBER_ID = 'me';
+  const MEMBER_COLORS = ['#2b6e5f', '#c0552b', '#7b4fb0', '#2f7fc0', '#c08a2b', '#b0426b', '#3a9d8a', '#5a6cb0'];
+
+  function activeMemberId() { return settings.activeMember || DEFAULT_MEMBER_ID; }
+  function recordMember(r) { return (r.payload && r.payload.member) || DEFAULT_MEMBER_ID; }
+  function pickColor(i) { return MEMBER_COLORS[i % MEMBER_COLORS.length]; }
+
+  function ensureDefaultMember() {
+    const rec = records[DEFAULT_MEMBER_ID];
+    if (!rec || rec.deleted) {
+      records[DEFAULT_MEMBER_ID] = {
+        id: DEFAULT_MEMBER_ID, module: SYS_MEMBER,
+        payload: { mid: DEFAULT_MEMBER_ID, name: '我', emoji: '🙂', color: '#2b6e5f' },
+        updated_at: new Date().toISOString(), deleted: false
+      };
+      dirty.add(DEFAULT_MEMBER_ID); persistAll();
+    }
+    if (!settings.activeMember) { settings.activeMember = DEFAULT_MEMBER_ID; saveJSON(LS.settings, settings); }
+  }
+  ensureDefaultMember();
+
   const listeners = {};
   function on(ev, fn) { (listeners[ev] = listeners[ev] || []).push(fn); }
   function emit(ev, data) { (listeners[ev] || []).forEach(fn => { try { fn(data); } catch (e) {} }); }
@@ -56,9 +79,12 @@ const Store = (() => {
   }
 
   /* ---------- 记录 CRUD（全部实时落盘） ---------- */
-  function add(module, payload) {
-    const id = uuid();
-    records[id] = { id, module, payload, updated_at: nowISO(), deleted: false };
+  function add(module, payload, opts = {}) {
+    const id = opts.id || uuid();
+    const p = { ...payload };
+    // 普通记录自动归属当前成员；成员目录/已自带 member 的不重复打标
+    if (module !== SYS_MEMBER && opts.stampMember !== false && !p.member) p.member = activeMemberId();
+    records[id] = { id, module, payload: p, updated_at: nowISO(), deleted: false };
     dirty.add(id); persistAll();
     emit('change', module); scheduleSync();
     return id;
@@ -77,9 +103,13 @@ const Store = (() => {
     emit('change', r.module); scheduleSync();
   }
   function get(id) { return records[id]; }
-  function list(module) {
+  function list(module, opts = {}) {
+    if (module === SYS_MEMBER) {
+      return Object.values(records).filter(r => r.module === SYS_MEMBER && !r.deleted);
+    }
+    const aid = activeMemberId();
     return Object.values(records)
-      .filter(r => r.module === module && !r.deleted)
+      .filter(r => r.module === module && !r.deleted && (opts.all || recordMember(r) === aid))
       .sort((a, b) => (b.payload.date || '').localeCompare(a.payload.date || '') || b.updated_at.localeCompare(a.updated_at));
   }
 
@@ -155,15 +185,15 @@ const Store = (() => {
   }
 
   async function syncNow(manual) {
-    if (!configured()) { setState('local', '本地模式'); return { ok: false, reason: 'unconfigured' }; }
+    if (!configured()) { setState('local', '离线本地模式'); return { ok: false, reason: 'unconfigured' }; }
     if (syncing) return { ok: false, reason: 'busy' };
-    if (!navigator.onLine) { setState('err', '离线，待网络恢复'); return { ok: false, reason: 'offline' }; }
+    if (!navigator.onLine) { setState('err', '离线 · 待网络恢复'); return { ok: false, reason: 'offline' }; }
     syncing = true;
     setState('busy', '同步中…');
     try {
       await pushDirty();
       await pullRemote();
-      setState('ok', '已同步 ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }));
+      setState('ok', '在线 · 已同步 ' + new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }));
       syncing = false;
       return { ok: true };
     } catch (e) {
@@ -194,19 +224,56 @@ const Store = (() => {
     if (autoTimer) clearInterval(autoTimer);
     autoTimer = setInterval(() => { if (configured()) syncNow(false); }, 60000); // 每 60s 后台静默同步
     window.addEventListener('online', () => { setState(configured() ? 'busy' : 'local', '网络恢复'); syncNow(false); });
-    window.addEventListener('offline', () => { if (configured()) setState('err', '已离线'); });
-    if (configured()) syncNow(false); else setState('local', '本地模式');
+    window.addEventListener('offline', () => { if (configured()) setState('err', '离线 · 待网络恢复'); });
+    if (configured()) syncNow(false); else setState('local', '离线本地模式');
   }
 
   function getSyncState() { return { state: syncState, msg: syncMsg, pending: dirty.size }; }
   function resetPullCursor() { lastPull = '1970-01-01T00:00:00Z'; saveJSON(LS.lastPull, lastPull); }
   function markAllDirty() { Object.keys(records).forEach(id => dirty.add(id)); persistAll(); }
 
+  /* ---------- 家庭成员管理 ---------- */
+  function members() {
+    return list(SYS_MEMBER).map(r => ({
+      id: r.payload.mid, name: r.payload.name,
+      emoji: r.payload.emoji || '🙂', color: r.payload.color || '#2b6e5f'
+    }));
+  }
+  function getMember(id) { return members().find(m => m.id === id); }
+  function addMember(name, emoji, color, idx) {
+    const id = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    add(SYS_MEMBER, {
+      mid: id, name: name || '成员', emoji: emoji || '🙂',
+      color: color || pickColor((members().length))
+    }, { id, stampMember: false });
+    return id;
+  }
+  function updateMember(id, patch) {
+    update(id, patch);                  // 合并到成员记录 payload（name/emoji/color）
+    emit('member', id);
+  }
+  function removeMember(id) {
+    if (id === DEFAULT_MEMBER_ID) return false;   // 默认成员不可删
+    remove(id);                                   // 删除成员目录记录
+    Object.values(records).forEach(r => {         // 删除该成员全部数据
+      if (r.module !== SYS_MEMBER && !r.deleted && recordMember(r) === id) remove(r.id);
+    });
+    if (activeMemberId() === id) setActiveMember(DEFAULT_MEMBER_ID);
+    emit('member', id);
+    return true;
+  }
+  function setActiveMember(id) {
+    settings.activeMember = id; saveJSON(LS.settings, settings);
+    emit('member', id); emit('settings');
+  }
+
   return {
     on, add, update, remove, get, list,
     getSettings, saveSettings,
     syncNow, testConnection, startAuto, getSyncState, configured,
     resetPullCursor, markAllDirty,
+    members, getMember, addMember, updateMember, removeMember, setActiveMember,
+    activeMember: activeMemberId, SYS_MEMBER, DEFAULT_MEMBER_ID,
     DEFAULT_MODULES, uuid
   };
 })();

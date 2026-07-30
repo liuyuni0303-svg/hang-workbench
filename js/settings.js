@@ -41,8 +41,8 @@ create policy "personal_full_access" on records
           ${st.pending ? `<span class="tag accent">${st.pending} 条待上传</span>` : ''}
         </div>
         <p class="muted" style="margin-bottom:12px">
-          🟢 绿色 = 已连接云端、同步正常&nbsp;&nbsp;🔴 红色 = 离线或同步失败&nbsp;&nbsp;⚪ 灰色 = 本地模式（未配置云端）<br>
-          未配置云端时，所有数据仍会<b>实时保存在本设备</b>，不会丢失。
+          🟢 绿色 = 在线 · 已同步&nbsp;&nbsp;🔴 红色 = 离线或同步失败&nbsp;&nbsp;⚪ 灰色 = 离线本地模式（未配置云端）<br>
+          未配置云端时，所有数据仍会<b>实时保存在本设备</b>，不会丢失；断网照常使用，联网后自动上传同步。
         </p>
         <div class="field"><label>Supabase 项目 URL</label>
           <input id="sUrl" placeholder="https://xxxx.supabase.co" value="${esc(s.supabaseUrl || '')}"></div>
