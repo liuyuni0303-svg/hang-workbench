@@ -389,3 +389,31 @@ pre.sqlbox{
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.001ms!important;transition-duration:.001ms!important}
 }
+
+/* ===== 待办清单 ===== */
+.todo-tabs{display:inline-flex;gap:6px;background:var(--bg);padding:4px;border-radius:999px;border:1px solid var(--line);flex-wrap:wrap}
+.todo-tabs button{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;color:var(--ink-2);transition:all .16s;white-space:nowrap}
+.todo-tabs button:hover{border-color:var(--brand);color:var(--brand)}
+.todo-tabs button.on{background:var(--grad-brand);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(21,121,95,.28)}
+
+.todo-list{margin-bottom:6px}
+.todo-item{display:flex;align-items:flex-start;gap:11px;padding:12px 4px;border-bottom:1px dashed var(--line)}
+.todo-item:last-child{border-bottom:none}
+.todo-item.overdue{background:var(--red-soft);border-radius:10px;padding-left:10px;padding-right:10px;margin:0 -6px}
+.todo-check{
+  width:24px;height:24px;min-width:24px;border-radius:50%;border:2px solid var(--brand);background:#fff;
+  display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .16s;flex:none;
+}
+.todo-check:hover{background:var(--brand-soft);transform:scale(1.05)}
+.todo-check.done{background:var(--brand);border-color:var(--brand)}
+.todo-check.done::after{content:"✓";color:#fff;font-size:14px;font-weight:800;line-height:1}
+.todo-main{flex:1;min-width:0}
+.todo-title{font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.todo-title.done{text-decoration:line-through;color:var(--ink-3)}
+.todo-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:12.5px;color:var(--ink-2)}
+.todo-note{color:var(--ink-2);word-break:break-all}
+.reminder-badge{
+  display:inline-flex;align-items:center;gap:3px;background:var(--accent-soft);color:var(--accent);
+  padding:2px 9px;border-radius:999px;font-weight:700;font-size:12px;
+}
+.reminder-badge.over{background:var(--red-soft);color:var(--red)}

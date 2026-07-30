@@ -12,7 +12,8 @@ const Store = (() => {
     { key: 'baking',   name: '烘焙',     icon: '🍞', type: 'baking',   core: true, hidden: false },
     { key: 'sport',    name: '运动',     icon: '🏃', type: 'sport',    core: true, hidden: false },
     { key: 'headache', name: '头疼频率', icon: '📅', type: 'headache', core: true, hidden: false },
-    { key: 'ledger',   name: '记账',     icon: '💰', type: 'ledger',   core: true, hidden: false }
+    { key: 'ledger',   name: '记账',     icon: '💰', type: 'ledger',   core: true, hidden: false },
+    { key: 'todo',     name: '待办清单', icon: '✅', type: 'todo',     core: true, hidden: false }
   ];
   const DEFAULT_CATS = ['餐饮','购物','交通','居家','医疗','烘焙耗材','运动装备','工资','其他收入','人情','娱乐','其他'];
 

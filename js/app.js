@@ -41,6 +41,7 @@
       case 'sport': ModSport.render(view); break;
       case 'headache': ModHeadache.render(view); break;
       case 'ledger': ModLedger.render(view); break;
+      case 'todo': ModTodo.render(view); break;
       default: ModCustom.render(view, mod.key, mod.name);
     }
   }

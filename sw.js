@@ -1,5 +1,5 @@
 /* 杭 · 个人工作台 Service Worker —— 应用壳离线缓存 + 即时更新 */
-const CACHE = 'hang-app-v9';
+const CACHE = 'hang-app-v10';
 const SHELL = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const SHELL = [
   './js/mod-headache.js',
   './js/mod-custom.js',
   './js/mod-ledger.js',
+  './js/mod-todo.js',
   './js/settings.js',
   './js/app.js',
   './icons/icon-192.png',
