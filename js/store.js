@@ -41,12 +41,44 @@ const Store = (() => {
 
   /* ---------- 家庭成员（多成员数据隔离，随云端同步） ---------- */
   const SYS_MEMBER = '__member__';          // 成员目录保留模块，不入导航
-  const DEFAULT_MEMBER_ID = 'me';
+  // 默认成员固定 id 必须是合法 UUID —— Supabase 的 records.id 是 uuid 类型，
+  // 之前用 'me' 会被数据库拒绝（invalid input syntax for type uuid: "me"）
+  const DEFAULT_MEMBER_ID = '6d650000-0000-4000-8000-00000000006d';
   const MEMBER_COLORS = ['#2b6e5f', '#c0552b', '#7b4fb0', '#2f7fc0', '#c08a2b', '#b0426b', '#3a9d8a', '#5a6cb0'];
 
   function activeMemberId() { return settings.activeMember || DEFAULT_MEMBER_ID; }
   function recordMember(r) { return (r.payload && r.payload.member) || DEFAULT_MEMBER_ID; }
   function pickColor(i) { return MEMBER_COLORS[i % MEMBER_COLORS.length]; }
+
+  /* ---------- 兼容旧数据：把非 UUID 的记录 id（'me' / 'm...'）迁移为 UUID ---------- */
+  // 旧版本用 'me' / 'm...' 作成员 id，但 Supabase 的 records.id 是 uuid 类型，上传会 400。
+  function isUuid(s) {
+    return typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+  }
+  function migrateLegacyIds() {
+    const map = {};
+    let changed = false;
+    Object.keys(records).forEach(id => {
+      if (isUuid(id)) return;
+      const nid = (id === 'me') ? DEFAULT_MEMBER_ID : uuid();
+      const nr = records[id];
+      nr.id = nid;
+      records[nid] = nr;
+      if (records[id] === nr) delete records[id];
+      map[id] = nid;
+      dirty.add(nid);
+      changed = true;
+    });
+    if (changed) {
+      Object.values(records).forEach(r => {
+        if (r.payload && map[r.payload.member]) r.payload.member = map[r.payload.member];
+        if (r.module === SYS_MEMBER && r.payload && map[r.payload.mid]) r.payload.mid = map[r.payload.mid];
+      });
+      if (map[settings.activeMember]) settings.activeMember = map[settings.activeMember];
+      persistAll();
+      saveJSON(LS.settings, settings);
+    }
+  }
 
   function ensureDefaultMember() {
     const rec = records[DEFAULT_MEMBER_ID];
@@ -60,6 +92,7 @@ const Store = (() => {
     }
     if (!settings.activeMember) { settings.activeMember = DEFAULT_MEMBER_ID; saveJSON(LS.settings, settings); }
   }
+  migrateLegacyIds();
   ensureDefaultMember();
 
   const listeners = {};
@@ -242,7 +275,7 @@ const Store = (() => {
   }
   function getMember(id) { return members().find(m => m.id === id); }
   function addMember(name, emoji, color, idx) {
-    const id = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const id = uuid();   // 必须是合法 UUID，否则上传到 Supabase 的 uuid 列会报 400
     add(SYS_MEMBER, {
       mid: id, name: name || '成员', emoji: emoji || '🙂',
       color: color || pickColor((members().length))
