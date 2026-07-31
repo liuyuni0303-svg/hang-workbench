@@ -80,14 +80,40 @@ const ModWeight = (() => {
       const cls = ['cal-day', dayRecs ? 'has-rec' : '', ds === today ? 'today' : '', ds > today ? 'future' : ''].join(' ');
       cells += `<div class="${cls}" data-day="${ds}">
         <span>${d}</span>${w && w.weight ? `<span class="val">${esc(w.weight)}</span>` : ''}
+        <span class="mk"></span>
       </div>`;
     }
 
+    const latestEmpty = !latestW;
+    const diffEmpty = diff == null;
+    const rate = daysInMonth ? Math.round(monthDays / daysInMonth * 100) : 0;
+
     view.innerHTML = `
-      <div class="stat-row">
-        <div class="stat"><div class="v">${latestW ? latestW.payload.weight : '--'}</div><div class="k">最新体重 kg</div></div>
-        <div class="stat"><div class="v" style="color:${diff == null ? 'var(--ink-3)' : diff <= 0 ? 'var(--green)' : 'var(--red)'}">${diff == null ? '--' : (diff > 0 ? '+' : '') + diff.toFixed(1)}</div><div class="k">${mtr.name}区间变化</div></div>
-        <div class="stat"><div class="v">${monthDays}</div><div class="k">本月记录天数</div></div>
+      <div class="w-board">
+        <div class="w-row2">
+          <div class="kpi ${latestEmpty ? 'empty' : ''}">
+            <div class="cap"><span>最新体重</span><span class="ic">⚖️</span></div>
+            ${latestW
+              ? `<div class="big">${esc(latestW.payload.weight)}<span class="u">kg</span></div>
+                 <div class="sub">${fmtDate(latestW.payload.date)} 已打卡</div>`
+              : `<div class="ebox"><div class="eic">⚖️</div><div><div class="et">尚未记录体重</div><div class="es">点击右下角 ＋ 记录今天</div></div></div>`}
+          </div>
+          <div class="kpi ${diffEmpty ? 'empty' : ''}">
+            <div class="cap"><span>${mtr.name}区间变化</span><span class="ic">📉</span></div>
+            ${diffEmpty
+              ? `<div class="ebox"><div class="eic">＋</div><div><div class="et">暂无对比数据</div><div class="es">多记录几天，自动计算区间变化</div></div></div>`
+              : `<div class="big" style="color:${diff <= 0 ? 'var(--green)' : 'var(--red)'}">${(diff > 0 ? '+' : '') + diff.toFixed(1)}<span class="u">${mtr.unit}</span></div>
+                 <div class="sub">较${curRange === 'custom' ? '所选区间' : curRange + '天前'}</div>`}
+          </div>
+        </div>
+        <div class="kpi full">
+          <div style="min-width:0">
+            <div class="cap"><span>本月记录天数</span></div>
+            <div class="big">${monthDays}<span class="u">/ ${daysInMonth} 天</span></div>
+            <div class="sub ${monthDays > 0 ? 'good' : ''}">${monthDays > 0 ? '达标率 ' + rate + '% · 继续加油' : '本月还没开始打卡'}</div>
+          </div>
+          <div class="ring" style="--p:${rate}%"><i>${rate}%</i></div>
+        </div>
       </div>
 
       <div class="card">
@@ -95,7 +121,7 @@ const ModWeight = (() => {
           <button class="icon-btn" id="prevM">‹</button>
           <div class="cal-title">${y}年${m}月</div>
           <div class="row" style="gap:4px">
-            <button class="btn small ghost" id="jumpToday">回今天</button>
+            <button class="today-btn" id="jumpToday">回今天</button>
             <button class="icon-btn" id="nextM">›</button>
           </div>
         </div>
@@ -103,7 +129,7 @@ const ModWeight = (() => {
           ${['日', '一', '二', '三', '四', '五', '六'].map(w => `<div class="cal-week">${w}</div>`).join('')}
           ${cells}
         </div>
-        <div class="muted" style="margin-top:10px">🟢 绿色 = 当天有体态记录（数字为体重kg）；点击日期录入 / 查看当天数据</div>
+        <div class="muted" style="margin-top:10px">🟢 圆点为当天有体态记录（格内数字为体重kg）；点击日期录入 / 查看当天数据</div>
       </div>
 
       <div class="card">

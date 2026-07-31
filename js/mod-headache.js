@@ -42,7 +42,7 @@ const ModHeadache = (() => {
           <button class="icon-btn" id="prevM">‹</button>
           <div class="cal-title">${y}年${m}月</div>
           <div class="row" style="gap:4px">
-            <button class="btn small ghost" id="jumpToday">回今天</button>
+            <button class="today-btn" id="jumpToday">回今天</button>
             <button class="icon-btn" id="nextM">›</button>
           </div>
         </div>
@@ -68,7 +68,7 @@ const ModHeadache = (() => {
 
   function lastGap(map, today) {
     const dates = Object.keys(map).filter(d => d <= today).sort();
-    if (!dates.length) return '--';
+    if (!dates.length) return '暂无';
     const last = new Date(dates[dates.length - 1] + 'T00:00:00');
     return Math.floor((new Date(today + 'T00:00:00') - last) / 86400000);
   }
