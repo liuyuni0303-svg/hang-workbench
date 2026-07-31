@@ -3,7 +3,7 @@ const SettingsPage = (() => {
   const { $, $$, esc, toast, openModal } = UI;
 
   const SQL = `create table if not exists records (
-  id uuid primary key,
+  id text primary key,
   user_key text not null,
   module text not null,
   payload jsonb not null default '{}'::jsonb,

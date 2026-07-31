@@ -189,17 +189,26 @@ const Store = (() => {
       headers: { ...headers(), 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify(rows)
     });
-    if (!resp.ok) throw new Error('上传失败 HTTP ' + resp.status);
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => '');
+      if (resp.status === 404 && txt.includes('No data found')) {
+        throw new Error('上传失败：records 表的 id 列缺少唯一约束（主键），请在 Supabase 执行建表 SQL');
+      }
+      throw new Error('上传失败 HTTP ' + resp.status + ' ' + txt.slice(0, 120));
+    }
     rows.forEach(r => dirty.delete(r.id));
     persistAll();
   }
 
   async function pullRemote() {
+    // 用请求发起时间作为新游标，避免设备时间戳异常导致漏数据
+    const cursor = nowISO();
     const url = base() + `?user_key=eq.${encodeURIComponent(settings.syncKey)}&updated_at=gt.${encodeURIComponent(lastPull)}&order=updated_at.asc&limit=1000`;
     const resp = await fetch(url, { headers: headers() });
     if (!resp.ok) throw new Error('拉取失败 HTTP ' + resp.status);
     const rows = await resp.json();
     let changedModules = new Set();
+    let maxRemote = cursor;
     rows.forEach(row => {
       const local = records[row.id];
       // last-write-wins：远端更新时间更新，或本地不存在
@@ -211,8 +220,9 @@ const Store = (() => {
         dirty.delete(row.id);
         changedModules.add(row.module);
       }
-      if (row.updated_at > lastPull) lastPull = row.updated_at;
+      if (row.updated_at > maxRemote) maxRemote = row.updated_at;
     });
+    lastPull = maxRemote;
     saveJSON(LS.lastPull, lastPull);
     persistAll();
     changedModules.forEach(m => emit('change', m));

@@ -258,8 +258,8 @@ textarea{resize:vertical;min-height:74px}
 /* toast */
 .toast{
   position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);
-  background:linear-gradient(135deg,#212b27,#2f3b36);color:#fff;padding:10px 20px;border-radius:999px;font-size:13.5px;
-  opacity:0;pointer-events:none;transition:all .28s cubic-bezier(.22,1,.36,1);z-index:200;white-space:nowrap;max-width:88vw;
+  background:linear-gradient(135deg,#212b27,#2f3b36);color:#fff;padding:10px 18px;border-radius:999px;font-size:13.5px;
+  opacity:0;pointer-events:none;transition:all .28s cubic-bezier(.22,1,.36,1);z-index:200;white-space:normal;text-align:center;max-width:min(88vw,360px);
   box-shadow:0 8px 24px rgba(20,28,25,.3);
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -352,13 +352,13 @@ pre.sqlbox{
 /* 统计卡 */
 .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:15px}
 .stat{
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 12px;text-align:center;
-  box-shadow:var(--shadow-sm);position:relative;overflow:hidden;transition:transform .16s,box-shadow .16s;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 10px;text-align:center;
+  box-shadow:var(--shadow-sm);position:relative;overflow:hidden;transition:transform .16s,box-shadow .16s;min-width:0;
 }
 .stat::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--grad-brand);opacity:.85}
 .stat:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-.stat .v{font-size:21px;font-weight:800;color:var(--brand);letter-spacing:.3px;font-variant-numeric:tabular-nums}
-.stat .k{font-size:12px;color:var(--ink-3);margin-top:3px;font-weight:600}
+.stat .v{font-size:clamp(16px,4.2vw,21px);font-weight:800;color:var(--brand);letter-spacing:.3px;font-variant-numeric:tabular-nums;word-break:break-all;line-height:1.2}
+.stat .k{font-size:12px;color:var(--ink-3);margin-top:4px;font-weight:600}
 
 /* ===== 移动端 ===== */
 @media (max-width:768px){
@@ -375,9 +375,103 @@ pre.sqlbox{
     transition:opacity .22s;z-index:35;backdrop-filter:blur(2px);
   }
   .view{padding:15px 14px 104px}
-  .grid3{grid-template-columns:1fr 1fr}
+  .grid2{grid-template-columns:1fr}
+  .grid3{grid-template-columns:1fr}
   .topbar{padding:12px 15px}
   .modal{border-radius:22px 22px 0 0}
+  .chart-tabs button{padding:5px 11px;font-size:12px}
+  .fab{right:18px;bottom:20px;width:52px;height:52px;font-size:26px}
+}
+@media (max-width:480px){
+  :root{--radius:14px;--radius-sm:10px}
+  body{font-size:14px}
+  .view{padding:12px 12px 100px}
+  .topbar{padding:10px 12px;gap:8px}
+  .topbar h1{font-size:16px}
+  .member-btn{padding:5px 9px;font-size:12px}
+  .member-name{max-width:48px}
+  .member-emoji{font-size:15px}
+
+  .card{padding:14px;margin-bottom:12px;border-radius:var(--radius)}
+  .card-title{font-size:14px;margin-bottom:12px}
+
+  .stat-row{grid-template-columns:1fr;gap:9px}
+  .stat{padding:12px 10px;display:flex;align-items:center;justify-content:space-between;text-align:left;gap:10px}
+  .stat .v{font-size:18px;flex:1;min-width:0;text-align:right}
+  .stat .k{font-size:11px;margin-top:0;max-width:60px}
+
+  .grid2,.grid3{gap:9px}
+  .field{margin-bottom:11px}
+  .field label{font-size:12px}
+  input,select,textarea{padding:9px 11px;font-size:14px}
+  .btn{padding:9px 15px;font-size:13.5px;border-radius:11px}
+  .btn.small{padding:6px 11px;font-size:12px}
+
+  .cal-head{flex-wrap:wrap;gap:8px}
+  .cal-head .row{margin-left:auto}
+  .cal-grid{gap:3px}
+  .cal-week{font-size:11px;padding:4px 0}
+  .cal-day{font-size:12px;border-radius:9px}
+  .cal-day .val{font-size:9px}
+  .cal-day::after{bottom:5px}
+  .cal-day.has-rec::before{top:4px;right:5px;width:5px;height:5px}
+
+  .rec{flex-direction:column;align-items:stretch;gap:8px;padding:11px 0}
+  .rec-main{min-width:0}
+  .rec-title{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:5px 8px!important;font-size:13.5px}
+  .rec-title > span{margin-left:0!important}
+  .rec-title > span[style*="margin-left:auto"]{margin-left:auto!important}
+  .rec-sub{font-size:12px}
+  .rec-ops{justify-content:flex-end;gap:5px}
+  .rec-ops button{width:36px;height:36px;font-size:16px}
+
+  .archive-head{padding:12px 13px;font-size:13.5px}
+  .archive-body{padding:4px 13px 10px}
+  .archive-head .count{padding:2px 8px;font-size:11px}
+
+  .todo-tabs{flex-wrap:nowrap;overflow-x:auto;padding:3px;gap:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .todo-tabs::-webkit-scrollbar{display:none}
+  .todo-tabs button{padding:6px 12px;font-size:12.5px;flex:none}
+  .todo-item{padding:11px 0;gap:9px}
+  .todo-check{width:22px;height:22px;min-width:22px}
+  .todo-title{font-size:13.5px}
+  .todo-meta{font-size:12px}
+  .reminder-badge{font-size:11px;padding:2px 7px}
+
+  .timer-box{padding:18px 16px}
+  .timer-time{font-size:36px}
+  .timer-btns button{padding:8px 16px;font-size:13px}
+
+  .modal{padding:18px 16px 24px}
+  .modal-head h3{font-size:16px}
+  .modal-foot{flex-direction:column;gap:9px;margin-top:16px}
+  .modal-foot .btn{width:100%}
+
+  .chart-tabs{gap:5px;margin-bottom:10px}
+  .chart-wrap{overflow-x:auto}
+
+  .steps{gap:9px}
+  .step{font-size:13px}
+  .step::before{width:22px;height:22px;min-width:22px;font-size:11px}
+  pre.sqlbox{font-size:11px;padding:12px}
+
+  .mod-row{flex-wrap:wrap;padding:10px 2px;gap:6px}
+  .mod-row .nm{flex:1 1 100%;font-size:13.5px}
+  .mod-row .ops{margin-left:auto}
+
+  .member-row{padding:9px 11px}
+  .member-row .member-emoji{font-size:18px}
+  .member-row .member-name{font-size:13px}
+
+  .empty{padding:36px 0;font-size:13px}
+  .empty .big{font-size:34px}
+
+  /* 烘焙卡片里的计时按钮：小屏堆叠 */
+  .card [data-timer], .card [data-timerx]{display:flex;width:100%;margin:8px 0 0 0!important}
+  .card [data-timer] + [data-timerx]{margin-top:6px!important}
+}
+@media (min-width:481px) and (max-width:768px){
+  .stat-row{grid-template-columns:repeat(2,1fr)}
 }
 @media (min-width:769px){
   .scrim{display:none}
@@ -391,8 +485,8 @@ pre.sqlbox{
 }
 
 /* ===== 待办清单 ===== */
-.todo-tabs{display:inline-flex;gap:6px;background:var(--bg);padding:4px;border-radius:999px;border:1px solid var(--line);flex-wrap:wrap}
-.todo-tabs button{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;color:var(--ink-2);transition:all .16s;white-space:nowrap}
+.todo-tabs{display:flex;gap:6px;background:var(--bg);padding:4px;border-radius:999px;border:1px solid var(--line);flex-wrap:wrap;max-width:100%}
+.todo-tabs button{padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;color:var(--ink-2);transition:all .16s;white-space:nowrap;border:1px solid transparent;background:transparent}
 .todo-tabs button:hover{border-color:var(--brand);color:var(--brand)}
 .todo-tabs button.on{background:var(--grad-brand);color:#fff;border-color:transparent;box-shadow:0 3px 10px rgba(21,121,95,.28)}
 
